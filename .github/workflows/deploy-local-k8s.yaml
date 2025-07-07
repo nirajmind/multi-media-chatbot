@@ -1,0 +1,110 @@
+# .github/workflows/deploy-local-k8s.yaml
+name: Deploy to Local Kubernetes (Kind) - Using Makefile
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx # Still good practice for multi-arch builds if needed
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Kind Cluster
+        uses: kubernetes-sigs/kind@v1.2.0
+        with:
+          node_image: kindest/node:v1.28.0
+
+      - name: Build Docker Images with Makefile
+        run: |
+          # Ensure docker-compose is installed on the runner if needed
+          # (GitHub Actions runners usually have it, but good to note)
+          
+          # Build all service images defined in docker-compose.yml
+          make ava-run
+        env:
+          # Pass any ENV variables that your Dockerfiles might need during build
+          # E.g., for HF_MODELS_TO_DOWNLOAD and HF_HOME
+          HF_MODELS_TO_DOWNLOAD: "sentence-transformers/all-MiniLM-L6-v2,openai/whisper-1"
+          HF_HOME: "/app/hf_cache"
+
+      - name: Load Docker Images into Kind Cluster
+        run: |
+          # Get the names of the images built by docker compose
+          # This assumes your docker-compose.yml uses specific image names/tags
+          # For example, if services are named 'whatsapp' and 'chainlit'
+          # and Dockerfile uses 'FROM python:...' they might be tagged as 'projectname-servicename:latest'
+          # You might need to inspect 'docker images' output after 'make ava-build'
+          
+          # Replace 'your-service-name' with the actual service names from your docker-compose.yml
+          # and 'your-image-tag' with the tags Docker Compose uses (often projectname-servicename)
+          
+          # Example (adjust based on your actual Docker Compose service names/tags):
+          HF_DOWNLOADER_IMAGE_TAG=$(docker images -q | grep hf_models_downloader | head -n 1) # Find the exact tag
+          EMBEDDING_SERVICE_IMAGE_TAG=$(docker images -q | grep embedding_service | head -n 1)
+          WHATSAPP_WEBHOOK_IMAGE_TAG=$(docker images -q | grep whatsapp | head -n 1) # Assuming projectname-servicename
+          CHAINLIT_UI_IMAGE_TAG=$(docker images -q | grep chainlit | head -n 1) # Assuming projectname-servicename
+
+          echo "Detected images from Makefile build:"
+          echo "HF Downloader: ${HF_DOWNLOADER_IMAGE_TAG}"
+          echo "Embedding Service: ${EMBEDDING_SERVICE_IMAGE_TAG}"
+          echo "WhatsApp Webhook: ${WHATSAPP_WEBHOOK_IMAGE_TAG}"
+          echo "Chainlit UI: ${CHAINLIT_UI_IMAGE_TAG}"
+
+          # Load images into Kind cluster
+          kind load docker-image ${HF_DOWNLOADER_IMAGE_TAG} --name kind
+          kind load docker-image ${EMBEDDING_SERVICE_IMAGE_TAG} --name kind
+          kind load docker-image ${WHATSAPP_WEBHOOK_IMAGE_TAG} --name kind
+          kind load docker-image ${CHAINLIT_UI_IMAGE_TAG} --name kind
+        env:
+          # Ensure any specific tags or registry prefixes used in your docker-compose.yml are defined
+          COMPOSE_PROJECT_NAME: ava-whatsapp-agent-course # Example, if your docker-compose.yml defines this
+
+      - name: Deploy Kubernetes Resources
+        run: |
+          echo "Applying Kubernetes manifests..."
+          kubectl apply -f 01-volumes.yaml
+          # Create secrets from GitHub Secrets (example, adjust for all your secrets)
+          kubectl create secret generic app-secrets \
+            --from-literal=GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}" \
+            --from-literal=ELEVENLABS_API_KEY="${{ secrets.ELEVENLABS_API_KEY }}" \
+            --from-literal=ELEVENLABS_VOICE_ID="${{ secrets.ELEVENLABS_VOICE_ID }}" \
+            --from-literal=TOGETHER_API_KEY="${{ secrets.TOGETHER_API_KEY }}" \
+            --from-literal=WHATSAPP_TOKEN="${{ secrets.WHATSAPP_TOKEN }}" \
+            --from-literal=WHATSAPP_PHONE_NUMBER_ID="${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}" \
+            --from-literal=WHATSAPP_VERIFY_TOKEN="${{ secrets.WHATSAPP_VERIFY_TOKEN }}" \
+            --from-literal=MONGO_URI="${{ secrets.MONGO_URI }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          kubectl apply -f 03-configmaps.yaml
+
+          # Apply the HF model downloader Job
+          kubectl apply -f 04-hf-model-downloader-job.yaml
+          kubectl wait --for=condition=complete job/hf-model-downloader --timeout=5m
+
+          # Apply Deployments and Services for your application components
+          kubectl apply -f 05-embedding-service.yaml
+          kubectl apply -f 06-whatsapp-webhook.yaml
+          kubectl apply -f 07-chainlit-ui.yaml
+
+          echo "Deployment complete!"
+
+      - name: Get Pods Status (for debugging)
+        if: always()
+        run: kubectl get pods -o wide
+
+      - name: Get Service Status (for debugging)
+        if: always()
+        run: kubectl get svc -o wide
+
+      - name: Get Job Status (for debugging)
+        if: always()
+        run: kubectl get jobs -o wide
