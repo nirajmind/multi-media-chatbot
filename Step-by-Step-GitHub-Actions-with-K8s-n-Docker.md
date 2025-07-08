@@ -187,6 +187,83 @@ After this, you can use ${{ secrets.GITHUB_TOKEN }} in the workflow:
 
 ```
 
+8. **Store information in variables**
+
+*Defining environment variables for a single workflow*
+
+```
+To set a custom environment variable for a single workflow, you can define it using the env key in the workflow file. The scope of a custom variable set by this method is limited to the element in which it is defined. You can define variables that are scoped for:
+
+1. The entire workflow, by using env at the top level of the workflow file.
+2. The contents of a job within a workflow, by using jobs.<job_id>.env.
+3. A specific step within a job, by using jobs.<job_id>.steps[*].env.
+
+
+name: Greeting on variable day
+
+on:
+  workflow_dispatch
+
+env:
+  DAY_OF_WEEK: Monday
+
+jobs:
+  greeting_job:
+    runs-on: ubuntu-latest
+    env:
+      Greeting: Hello
+    steps:
+      - name: "Say Hello Mona it's Monday"
+        run: echo "$Greeting $First_Name. Today is $DAY_OF_WEEK!"
+        env:
+          First_Name: Mona
+
+
+
+You can access env variable values using runner environment variables or using contexts. The example above shows three custom variables being used as runner environment variables in an echo command: $DAY_OF_WEEK, $Greeting, and $First_Name. The values for these variables are set, and scoped, at the workflow, job, and step level respectively. The interpolation of these variables happens on the runner.
+
+The commands in the run steps of a workflow, or a referenced action, are processed by the shell you are using on the runner. The instructions in the other parts of a workflow are processed by GitHub Actions and are not sent to the runner. You can use either runner environment variables or contexts in run steps, but in the parts of a workflow that are not sent to the runner you must use contexts to access variable values. For more information, see Using contexts to access variable values.
+
+Because runner environment variable interpolation is done after a workflow job is sent to a runner machine, you must use the appropriate syntax for the shell that's used on the runner. In this example, the workflow specifies ubuntu-latest. By default, Linux runners use the bash shell, so you must use the syntax $NAME. By default, Windows runners use PowerShell, so you would use the syntax $env:NAME. For more information about shells, see Workflow syntax for GitHub Actions.
+```
+
+*Defining configuration variables for multiple workflows*
+
+```
+You can create configuration variables for use across multiple workflows, and can define them at either the organization, repository, or environment level.
+
+For example, you can use configuration variables to set default values for parameters passed to build tools at an organization level, but then allow repository owners to override these parameters on a case-by-case basis.
+
+When you define configuration variables, they are automatically available in the vars context. For more information, see Using the vars context to access configuration variable values.
+```
+
+*Creating configuration variables for a repository*
+
+```
+To create secrets or variables on GitHub for a personal account repository, you must be the repository owner. To create secrets or variables on GitHub for an organization repository, you must have admin access. Lastly, to create secrets or variables for a personal account repository or an organization repository through the REST API, you must have collaborator access.
+```
+
+1. On GitHub, navigate to the main page of the repository.
+
+2. Under your repository name, click  Settings. If you cannot see the "Settings" tab, select the  dropdown menu, then click Settings.
+
+![Alt text](https://docs.github.com/assets/cb-28260/mw-1440/images/help/repository/repo-actions-settings.webp "Settings")
+
+3. In the "Security" section of the sidebar, select  Secrets and variables, then click Actions.
+
+4. Click the Variables tab.
+
+![Alt text](https://docs.github.com/assets/cb-57426/mw-1440/images/help/repository/actions-variables-tab.webp "Secrets & Variables")
+
+5. Click New repository variable.
+
+6. In the Name field, enter a name for your variable.
+
+7. In the Value field, enter the value for your variable.
+
+8. Click Add variable.
+
+
 ![Alt text]()
 
 
