@@ -18,6 +18,43 @@ jobs:
       - name: Set up Docker Buildx # Still good practice for multi-arch builds if needed
         uses: docker/setup-buildx-action@v3
 
+      # --- CRITICAL FIX: Create .env file from GitHub Secrets ---
+      - name: Create .env file
+        run: |
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
+          echo "ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}" >> .env
+          echo "ELEVENLABS_VOICE_ID=${{ secrets.ELEVENLABS_VOICE_ID }}" >> .env
+          echo "TOGETHER_API_KEY=${{ secrets.TOGETHER_API_KEY }}" >> .env
+          echo "WHATSAPP_TOKEN=${{ secrets.WHATSAPP_TOKEN }}" >> .env
+          echo "WHATSAPP_PHONE_NUMBER_ID=${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}" >> .env
+          echo "WHATSAPP_VERIFY_TOKEN=${{ secrets.WHATSAPP_VERIFY_TOKEN }}" >> .env
+          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+          echo "DATABASE_NAME=${{ vars.DATABASE_NAME }}" >> .env # Assuming non-sensitive variable from GitHub Actions Variables
+          echo "COLLECTION_NAME=${{ vars.COLLECTION_NAME }}" >> .env # Assuming non-sensitive variable from GitHub Actions Variables
+          echo "TEXT_MODEL_NAME=${{ vars.TEXT_MODEL_NAME }}" >> .env
+          echo "EMBEDDER_NAME=${{ vars.EMBEDDER_NAME }}" >> .env
+          # Add all other variables from your .env.example file here
+        env:
+          # Ensure all secrets are defined in your GitHub Repository Secrets
+          # Ensure non-sensitive variables are defined in GitHub Repository Variables
+          # Access secrets using ${{ secrets.<SECRET_NAME> }}
+          # Access variables using ${{ vars.<VAR_NAME> }} (for non-sensitive vars)
+          # These are not directly consumed by 'echo' but tell GitHub Actions that these values are needed.
+          # The run command itself accesses them directly.
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+          TOGETHER_API_KEY: ${{ secrets.TOGETHER_API_KEY }}
+          WHATSAPP_TOKEN: ${{ secrets.WHATSAPP_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_VERIFY_TOKEN: ${{ secrets.WHATSAPP_VERIFY_TOKEN }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          DATABASE_NAME: ${{ vars.DATABASE_NAME }} # Example: if you have a non-secret DB_NAME
+          COLLECTION_NAME: ${{ vars.COLLECTION_NAME }} # Example
+          TEXT_MODEL_NAME: ${{ vars.TEXT_MODEL_NAME }}
+          EMBEDDER_NAME: ${{ vars.EMBEDDER_NAME }}
+      # --- END CRITICAL FIX ---  
+
       - name: Set up Kind Cluster
         uses: helm/kind-action@v1
         with:
