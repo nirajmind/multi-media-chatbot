@@ -6,11 +6,35 @@ include .env
 
 CHECK_DIRS := .
 
+# Define service-to-Dockerfile mapping and image names
+HF_DOWNLOADER_DOCKERFILE = Dockerfile.hf_models
+HF_DOWNLOADER_IMAGE_TAG = $(COMPOSE_PROJECT_NAME)_hf_models_downloader:latest
+
+WHATSAPP_DOCKERFILE = Dockerfile.whatsapp
+WHATSAPP_IMAGE_TAG = $(COMPOSE_PROJECT_NAME)_whatsapp:latest
+
+CHAINLIT_DOCKERFILE = Dockerfile.chainlit
+CHAINLIT_IMAGE_TAG = $(COMPOSE_PROJECT_NAME)_chainlit:latest
+
+EMBEDDING_DOCKERFILE = Dockerfile.embedding_service
+EMBEDDING_IMAGE_TAG = $(COMPOSE_PROJECT_NAME)_embedding_service:latest
+
+# Set COMPOSE_PROJECT_NAME if it's not inherited
+COMPOSE_PROJECT_NAME ?= ava-whatsapp-agent-course
+
 ava-build:
-	docker compose build
+	# --- CRITICAL FIX: Ensure BuildKit is enabled and explicitly target platform for each build ---
+	# This should force the build to pull the Linux manifest.
+	# DOCKER_BUILDKIT=1 ensures BuildKit is used.
+	# The --platform argument is for the *output* architecture of the image.
+	DOCKER_BUILDKIT=1 docker build --platform linux/amd64 -t $(HF_DOWNLOADER_IMAGE_TAG) -f $(HF_DOWNLOADER_DOCKERFILE) .
+	DOCKER_BUILDKIT=1 docker build --platform linux/amd64 -t $(EMBEDDING_IMAGE_TAG) -f $(EMBEDDING_DOCKERFILE) .
+	DOCKER_BUILDKIT=1 docker build --platform linux/amd64 -t $(WHATSAPP_IMAGE_TAG) -f $(WHATSAPP_DOCKERFILE) .
+	DOCKER_BUILDKIT=1 docker build --platform linux/amd64 -t $(CHAINLIT_IMAGE_TAG) -f $(CHAINLIT_DOCKERFILE) .
+	# --- END CRITICAL FIX ---
 
 ava-run:
-	docker compose up --build -d
+	docker compose up -d
 
 ava-stop:
 	docker compose stop
