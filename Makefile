@@ -7,10 +7,10 @@ include .env
 CHECK_DIRS := .
 
 ava-build:
-	docker compose build --platform linux/amd64
+	docker compose build
 
 ava-run:
-	docker compose up --build -d --platform linux/amd64
+	docker compose up --build -d
 
 ava-stop:
 	docker compose stop
