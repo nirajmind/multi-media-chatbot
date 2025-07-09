@@ -57,9 +57,9 @@ jobs:
           #   platform=linux/amd64
           # Driver options are preferred for setting the image if you just want to swap.
           # Let's use the explicit 'driver-opts' for the builder.
-          driver-opts: |
-            image=moby/buildkit:latest
-            platform=linux/amd64
+          driver: docker-container
+          #  image=moby/buildkit:latest
+          #  platform=linux/amd64
           # If the above fails, you can try to specify a driver like 'docker-container' and then the image.
           # driver: docker-container
           # buildkitd-image: moby/buildkit:latest
