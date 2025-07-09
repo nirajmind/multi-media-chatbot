@@ -110,7 +110,7 @@ jobs:
         run: |
           $KIND_CLI_VERSION = "v0.29.0" # Ensure this matches the desired Kind CLI version
           $KIND_INSTALL_DIR = "$env:HOMEDRIVE\$env:HOMEPATH\.kind\bin" # Standard install dir
-          $KIND_URL = "https://github.com/kubernetes-sigs/kind/releases/download/$KIND_CLI_VERSION/kind-windows-amd64.exe"
+          $KIND_URL = "https://github.com/kubernetes-sigs/kind/releases/download/v0.29.0/kind-windows-amd64"
           
           Write-Host "Creating KIND install directory: $KIND_INSTALL_DIR"
           New-Item -ItemType Directory -Force -Path $KIND_INSTALL_DIR
