@@ -59,7 +59,7 @@ jobs:
           # Let's use the explicit 'driver-opts' for the builder.
           driver: docker-container
           driver-opts: |
-            image=moby/buildkit:buildx-stable
+            image=moby/buildkit:latest
           #  platform=linux/amd64
           # If the above fails, you can try to specify a driver like 'docker-container' and then the image.
           # driver: docker-container
