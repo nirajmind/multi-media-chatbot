@@ -44,7 +44,7 @@ jobs:
       - name: Set up Docker Buildx # Still good practice for multi-arch builds if needed
         uses: docker/setup-buildx-action@v3
         with:
-          platforms: linux/amd64,linux/arm64 # Adjust based on your needs
+          platforms: linux/amd64 # Adjust based on your needs
           # --- CRITICAL FIX: Specify a known-good BuildKit image ---
           # 'buildkitd-flags: --containerd-worker-snapshotter=overlayfs --oci-worker-net=host' are common flags for Windows/WSL2
           # 'moby/buildkit:latest' or 'moby/buildkit:buildx-stable' might work.
@@ -58,7 +58,8 @@ jobs:
           # Driver options are preferred for setting the image if you just want to swap.
           # Let's use the explicit 'driver-opts' for the builder.
           driver: docker-container
-          #  image=moby/buildkit:latest
+          driver-opts: |
+            image=moby/buildkit:buildx-stable
           #  platform=linux/amd64
           # If the above fails, you can try to specify a driver like 'docker-container' and then the image.
           # driver: docker-container
