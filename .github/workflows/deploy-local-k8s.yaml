@@ -9,10 +9,10 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: windows-latest
     strategy:
       matrix:
-        os: [ubuntu-latest] # Adjust if you have specific OS requirements
+        os: [windows-latest] # Adjust if you have specific OS requirements
 
     steps:
       - name: Checkout code
@@ -38,7 +38,7 @@ jobs:
           
           Write-Host "Early Cleanup: Disk space after:"
           Get-PSDrive -PSProvider FileSystem | Format-Table -AutoSize
-        shell: pwsh # Explicitly tells GitHub Actions to use PowerShell
+        shell: powershell # Explicitly tells GitHub Actions to use PowerShell
       # --- END CRITICAL FIX ---
 
       - name: Set up Docker Buildx # Still good practice for multi-arch builds if needed
@@ -47,25 +47,25 @@ jobs:
       # --- CRITICAL FIX: Create .env file from GitHub Secrets ---
       - name: Create .env file
         run: |
-          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
-          echo "ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}" >> .env
-          echo "ELEVENLABS_VOICE_ID=${{ secrets.ELEVENLABS_VOICE_ID }}" >> .env
-          echo "TOGETHER_API_KEY=${{ secrets.TOGETHER_API_KEY }}" >> .env
-          echo "WHATSAPP_TOKEN=${{ secrets.WHATSAPP_TOKEN }}" >> .env
-          echo "WHATSAPP_PHONE_NUMBER_ID=${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}" >> .env
-          echo "WHATSAPP_VERIFY_TOKEN=${{ secrets.WHATSAPP_VERIFY_TOKEN }}" >> .env
-          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
-          echo "DATABASE_NAME=${{ vars.DATABASE_NAME }}" >> .env # Assuming non-sensitive variable from GitHub Actions Variables
-          echo "COLLECTION_NAME=${{ vars.COLLECTION_NAME }}" >> .env # Assuming non-sensitive variable from GitHub Actions Variables
-          echo "TEXT_MODEL_NAME=${{ vars.TEXT_MODEL_NAME }}" >> .env
-          echo "EMBEDDER_NAME=${{ vars.EMBEDDER_NAME }}" >> .env
+          Write-Host "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
+          Write-Host "ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}" >> .env
+          Write-Host "ELEVENLABS_VOICE_ID=${{ secrets.ELEVENLABS_VOICE_ID }}" >> .env
+          Write-Host "TOGETHER_API_KEY=${{ secrets.TOGETHER_API_KEY }}" >> .env
+          Write-Host "WHATSAPP_TOKEN=${{ secrets.WHATSAPP_TOKEN }}" >> .env
+          Write-Host "WHATSAPP_PHONE_NUMBER_ID=${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}" >> .env
+          Write-Host "WHATSAPP_VERIFY_TOKEN=${{ secrets.WHATSAPP_VERIFY_TOKEN }}" >> .env
+          Write-Host "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+          Write-Host "DATABASE_NAME=${{ vars.DATABASE_NAME }}" >> .env # Assuming non-sensitive variable from GitHub Actions Variables
+          Write-Host "COLLECTION_NAME=${{ vars.COLLECTION_NAME }}" >> .env # Assuming non-sensitive variable from GitHub Actions Variables
+          Write-Host "TEXT_MODEL_NAME=${{ vars.TEXT_MODEL_NAME }}" >> .env
+          Write-Host "EMBEDDER_NAME=${{ vars.EMBEDDER_NAME }}" >> .env
           # Add all other variables from your .env.example file here
         env:
           # Ensure all secrets are defined in your GitHub Repository Secrets
           # Ensure non-sensitive variables are defined in GitHub Repository Variables
           # Access secrets using ${{ secrets.<SECRET_NAME> }}
           # Access variables using ${{ vars.<VAR_NAME> }} (for non-sensitive vars)
-          # These are not directly consumed by 'echo' but tell GitHub Actions that these values are needed.
+          # These are not directly consumed by 'Write-Host' but tell GitHub Actions that these values are needed.
           # The run command itself accesses them directly.
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
@@ -112,29 +112,39 @@ jobs:
           # and 'your-image-tag' with the tags Docker Compose uses (often projectname-servicename)
           
           # Example (adjust based on your actual Docker Compose service names/tags):
-          HF_DOWNLOADER_IMAGE_TAG=$(docker images -q | grep hf_models_downloader | head -n 1) # Find the exact tag
-          EMBEDDING_SERVICE_IMAGE_TAG=$(docker images -q | grep embedding_service | head -n 1)
-          WHATSAPP_WEBHOOK_IMAGE_TAG=$(docker images -q | grep whatsapp | head -n 1) # Assuming projectname-servicename
-          CHAINLIT_UI_IMAGE_TAG=$(docker images -q | grep chainlit | head -n 1) # Assuming projectname-servicename
+          HF_DOWNLOADER_IMAGE_TAG = (docker images --format "{{.Repository}}:{{.Tag}}" | Where-Object { $_ -like "*-hf_models_downloader:*" } | Select -First 1).Trim()
+          #HF_DOWNLOADER_IMAGE_TAG=$(docker images -q | grep hf_models_downloader | head -n 1) 
+          # Find the exact tag
+          #EMBEDDING_SERVICE_IMAGE_TAG=$(docker images -q | grep embedding_service | head -n 1)
+          EMBEDDING_SERVICE_IMAGE_TAG=$(docker images --format "{{.Repository}}:{{.Tag}}" | Where-Object { $_ -like "*-embedding_service:*" } | Select -First 1).Trim()
+          # Assuming the WhatsApp Webhook service is named 'whatsapp' in your docker-compose.yml
+          # and the Chainlit UI service is named 'chainlit'
+          WHATSAPP_WEBHOOK_IMAGE_TAG=$(docker images --format "{{.Repository}}:{{.Tag}}" | Where-Object { $_ -like "*-whatsapp:*" } | Select -First 1).Trim()
+          CHAINLIT_UI_IMAGE_TAG=$(docker images --format "{{.Repository}}:{{.Tag}}" | Where-Object { $_ -like "*-chainlit:*" } | Select -First 1).Trim()
+          #WHATSAPP_WEBHOOK_IMAGE_TAG=$(docker images -q | grep whatsapp | head -n 1) 
+          # Assuming projectname-servicename
+          #CHAINLIT_UI_IMAGE_TAG=$(docker images -q | grep chainlit | head -n 1) 
+          # Assuming projectname-servicename
 
-          echo "Detected images from Makefile build:"
-          echo "HF Downloader: ${HF_DOWNLOADER_IMAGE_TAG}"
-          echo "Embedding Service: ${EMBEDDING_SERVICE_IMAGE_TAG}"
-          echo "WhatsApp Webhook: ${WHATSAPP_WEBHOOK_IMAGE_TAG}"
-          echo "Chainlit UI: ${CHAINLIT_UI_IMAGE_TAG}"
+          Write-Host "Detected images from Makefile build:"
+          Write-Host "HF Downloader: ${HF_DOWNLOADER_IMAGE_TAG}"
+          Write-Host "Embedding Service: ${EMBEDDING_SERVICE_IMAGE_TAG}"
+          Write-Host "WhatsApp Webhook: ${WHATSAPP_WEBHOOK_IMAGE_TAG}"
+          Write-Host "Chainlit UI: ${CHAINLIT_UI_IMAGE_TAG}"
 
           # Load images into Kind cluster
           kind load docker-image ${HF_DOWNLOADER_IMAGE_TAG} --name kind
           kind load docker-image ${EMBEDDING_SERVICE_IMAGE_TAG} --name kind
           kind load docker-image ${WHATSAPP_WEBHOOK_IMAGE_TAG} --name kind
           kind load docker-image ${CHAINLIT_UI_IMAGE_TAG} --name kind
+          shell: powershell # Explicitly tells GitHub Actions to use PowerShell
         env:
           # Ensure any specific tags or registry prefixes used in your docker-compose.yml are defined
           COMPOSE_PROJECT_NAME: ava-whatsapp-agent-course # Example, if your docker-compose.yml defines this
 
       - name: Deploy Kubernetes Resources
         run: |
-          echo "Applying Kubernetes manifests..."
+          Write-Host "Applying Kubernetes manifests..."
           kubectl apply -f 01-volumes.yaml
           # Create secrets from GitHub Secrets (example, adjust for all your secrets)
           kubectl create secret generic app-secrets \
@@ -159,16 +169,20 @@ jobs:
           kubectl apply -f 06-whatsapp-webhook.yaml
           kubectl apply -f 07-chainlit-ui.yaml
 
-          echo "Deployment complete!"
+          Write-Host "Deployment complete!"
+        shell: powershell # Explicitly tells GitHub Actions to use PowerShell  
 
       - name: Get Pods Status (for debugging)
         if: always()
         run: kubectl get pods -o wide
+        shell: powershell # Explicitly tells GitHub Actions to use PowerShell
 
       - name: Get Service Status (for debugging)
         if: always()
         run: kubectl get svc -o wide
+        shell: powershell # Explicitly tells GitHub Actions to use PowerShell
 
       - name: Get Job Status (for debugging)
         if: always()
         run: kubectl get jobs -o wide
+        shell: powershell # Explicitly tells GitHub Actions to use PowerShell
