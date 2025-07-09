@@ -104,21 +104,43 @@ jobs:
           EMBEDDER_NAME: ${{ vars.EMBEDDER_NAME }}
       # --- END CRITICAL FIX ---  
 
-      - name: Manually Download and Install Kind for Windows
+      - name: Set up Kind Cluster # <--- CRITICAL FIX: Make Kind binary download robust ---
+        # This step now focuses on getting the KIND CLI binary (kind.exe)
+        # and kubectl. Node image is specified, but the binary download is manual for robustness.
         run: |
-          $KIND_VERSION = "v0.29.0" # Make sure this matches your desired Kind CLI version
-          $KIND_URL = "https://kind.sigs.k8s.io/dl/$KIND_VERSION/kind-windows-amd64.exe"
-          $KIND_INSTALL_DIR = "$env:HOMEDRIVE\$env:HOMEPATH\.kind\bin" # Example install dir
-
+          $KIND_CLI_VERSION = "v0.29.0" # Ensure this matches the desired Kind CLI version
+          $KIND_INSTALL_DIR = "$env:HOMEDRIVE\$env:HOMEPATH\.kind\bin" # Standard install dir
+          $KIND_URL = "https://github.com/kubernetes-sigs/kind/releases/download/$KIND_CLI_VERSION/kind-windows-amd64.exe"
+          
+          Write-Host "Creating KIND install directory: $KIND_INSTALL_DIR"
           New-Item -ItemType Directory -Force -Path $KIND_INSTALL_DIR
-          Invoke-WebRequest -Uri $KIND_URL -OutFile "$KIND_INSTALL_DIR\kind.exe"
+          
+          Write-Host "Downloading KIND binary from: $KIND_URL"
+          
+          # --- Robust download with retries and timeout ---
+          $MaxRetries = 5
+          $DelaySeconds = 5
+          for ($i = 0; $i -lt $MaxRetries; $i++) {
+              try {
+                  # Use Invoke-WebRequest with increased timeout
+                  Invoke-WebRequest -Uri $KIND_URL -OutFile "$KIND_INSTALL_DIR\kind.exe" -TimeoutSec 300 # 5 minutes timeout
+                  Write-Host "KIND binary downloaded successfully on attempt $($i + 1)."
+                  break
+              } catch {
+                  Write-Host "Download failed on attempt $($i + 1): $($_.Exception.Message)"
+                  if ($i -lt ($MaxRetries - 1)) {
+                      Write-Host "Retrying in $DelaySeconds seconds..."
+                      Start-Sleep -Seconds $DelaySeconds
+                  } else {
+                      throw "Failed to download KIND binary after $MaxRetries attempts."
+                  }
+              }
+          }
+          # --- End robust download ---
 
           # Add kind.exe to PATH for this job
           echo "$KIND_INSTALL_DIR" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-          Write-Host "Kind binary downloaded and added to PATH."
-          kind version # Verify installation
-        shell: powershell # Explicitly tells GitHub Actions to use PowerShell
+        shell: powershell # Explicitly tells GitHub Actions to use PowerShell  
 
       #- name: Set up Kind Cluster
       #  uses: helm/kind-action@v1.12.0
