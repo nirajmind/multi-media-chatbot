@@ -20,16 +20,26 @@ jobs:
         with:
           fetch-depth: 0 # Fetch the entire history
 
+      # --- CRITICAL FIX: Windows/PowerShell commands for Pruning ---
       - name: Prune Docker system (Early and Aggressive Cleanup)
         run: |
-          echo "Early Cleanup: Disk space before:"
-          df -h
-          sudo rm -rf /tmp/* /tmp/.* # Remove all files and directories in /tmp
-          sudo rm -rf /var/tmp/* /var/tmp/.* # Also clean /var/tmp
+          Write-Host "Early Cleanup: Disk space before:"
+          # Get-PSDrive for general drive info (like 'df -h')
+          Get-PSDrive -PSProvider FileSystem | Format-Table -AutoSize
+          
+          # Remove-Item for file/directory deletion (like 'rm -rf')
+          # $env:TEMP is the Windows equivalent of /tmp
+          Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -Path "C:\Windows\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
+          
+          # Docker commands are generally cross-platform and should work
           docker system prune -af
           docker builder prune -af
-          echo "Early Cleanup: Disk space after:"
-          df -h
+          
+          Write-Host "Early Cleanup: Disk space after:"
+          Get-PSDrive -PSProvider FileSystem | Format-Table -AutoSize
+        shell: pwsh # Explicitly tells GitHub Actions to use PowerShell
+      # --- END CRITICAL FIX ---
 
       - name: Set up Docker Buildx # Still good practice for multi-arch builds if needed
         uses: docker/setup-buildx-action@v3
