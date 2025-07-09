@@ -27,7 +27,7 @@ jobs:
           docker builder prune -af
           echo "Early Cleanup: Disk space after:"
           df -h
-          
+
       - name: Set up Docker Buildx # Still good practice for multi-arch builds if needed
         uses: docker/setup-buildx-action@v3
 
