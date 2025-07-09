@@ -43,6 +43,8 @@ jobs:
 
       - name: Set up Docker Buildx # Still good practice for multi-arch builds if needed
         uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64 # Adjust based on your needs
 
       # --- CRITICAL FIX: Create .env file from GitHub Secrets ---
       - name: Create .env file
