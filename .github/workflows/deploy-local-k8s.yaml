@@ -105,11 +105,11 @@ jobs:
       # --- END CRITICAL FIX ---  
 
       - name: Set up Kind Cluster
-        uses: helm/kind-action@v1
+        uses: helm/kind-action@v1.12.0
         with:
           node_image: kindest/node:v1.28.0
-          kind-binary-os: windows
-          kind-binary-arch: amd64  
+          #kind-binary-os: windows
+          #kind-binary-arch: amd64  
 
       - name: Build Docker Images with Makefile
         run: |
