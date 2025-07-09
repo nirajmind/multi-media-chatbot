@@ -104,10 +104,26 @@ jobs:
           EMBEDDER_NAME: ${{ vars.EMBEDDER_NAME }}
       # --- END CRITICAL FIX ---  
 
-      - name: Set up Kind Cluster
-        uses: helm/kind-action@v1.12.0
-        with:
-          node_image: kindest/node:v1.28.0
+      - name: Manually Download and Install Kind for Windows
+        run: |
+          $KIND_VERSION = "v0.29.0" # Make sure this matches your desired Kind CLI version
+          $KIND_URL = "https://kind.sigs.k8s.io/dl/$KIND_VERSION/kind-windows-amd64.exe"
+          $KIND_INSTALL_DIR = "$env:HOMEDRIVE\$env:HOMEPATH\.kind\bin" # Example install dir
+
+          New-Item -ItemType Directory -Force -Path $KIND_INSTALL_DIR
+          Invoke-WebRequest -Uri $KIND_URL -OutFile "$KIND_INSTALL_DIR\kind.exe"
+
+          # Add kind.exe to PATH for this job
+          echo "$KIND_INSTALL_DIR" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+          Write-Host "Kind binary downloaded and added to PATH."
+          kind version # Verify installation
+        shell: powershell # Explicitly tells GitHub Actions to use PowerShell
+
+      #- name: Set up Kind Cluster
+      #  uses: helm/kind-action@v1.12.0
+      #  with:
+      #    node_image: kindest/node:v1.28.0
           #kind-binary-os: windows
           #kind-binary-arch: amd64  
 
