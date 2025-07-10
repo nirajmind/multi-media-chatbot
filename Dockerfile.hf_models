@@ -11,8 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends git curl ca-cer
 ENV PYTHONUNBUFFERED=1
 ENV HF_HOME="/app/hf_cache" 
 # Set a known cache directory for HF models
-#ENV HF_HUB_OFFLINE=1 
-# Tells Hugging Face libraries to not hit internet
 
 # Copy only the dependency lock file first. This changes less often than pyproject.toml
 # and ensures caching for initial dependency install.
