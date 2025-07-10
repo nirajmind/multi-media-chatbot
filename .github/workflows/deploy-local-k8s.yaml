@@ -204,9 +204,9 @@ jobs:
           Write-Host "Chainlit UI: ${CHAINLIT_UI_IMAGE_TAG}"
 
           # Load images into Kind cluster
-          kind load docker-image ${HF_DOWNLOADER_IMAGE_TAG} --name kind
-          kind load docker-image ${WHATSAPP_WEBHOOK_IMAGE_TAG} --name kind
-          kind load docker-image ${CHAINLIT_UI_IMAGE_TAG} --name kind
+          kind load docker-image ${HF_DOWNLOADER_IMAGE_TAG} --name kind-control-plane
+          kind load docker-image ${WHATSAPP_WEBHOOK_IMAGE_TAG} --name kind-control-plane
+          kind load docker-image ${CHAINLIT_UI_IMAGE_TAG} --name kind-control-plane
         shell: powershell # Explicitly tells GitHub Actions to use PowerShell
         env:
           # Ensure any specific tags or registry prefixes used in your docker-compose.yml are defined
