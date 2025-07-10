@@ -186,20 +186,17 @@ jobs:
           # Assuming projectname-servicename
 
           $COMPOSE_PROJECT_NAME = $env:COMPOSE_PROJECT_NAME
-          $HF_DOWNLOADER_IMAGE_TAG = "${COMPOSE_PROJECT_NAME}_hf_models_downloader:latest"
-          $EMBEDDING_SERVICE_IMAGE_TAG = "${COMPOSE_PROJECT_NAME}_embedding_service:latest"
-          $WHATSAPP_WEBHOOK_IMAGE_TAG = "${COMPOSE_PROJECT_NAME}_whatsapp:latest"
-          $CHAINLIT_UI_IMAGE_TAG = "${COMPOSE_PROJECT_NAME}_chainlit:latest"
+          $HF_DOWNLOADER_IMAGE_TAG = "${COMPOSE_PROJECT_NAME}-hf_models_downloader:latest"
+          $WHATSAPP_WEBHOOK_IMAGE_TAG = "${COMPOSE_PROJECT_NAME}-whatsapp:latest"
+          $CHAINLIT_UI_IMAGE_TAG = "${COMPOSE_PROJECT_NAME}-chainlit:latest"
 
           Write-Host "Detected images from Makefile build:"
           Write-Host "HF Downloader: ${HF_DOWNLOADER_IMAGE_TAG}"
-          Write-Host "Embedding Service: ${EMBEDDING_SERVICE_IMAGE_TAG}"
           Write-Host "WhatsApp Webhook: ${WHATSAPP_WEBHOOK_IMAGE_TAG}"
           Write-Host "Chainlit UI: ${CHAINLIT_UI_IMAGE_TAG}"
 
           # Load images into Kind cluster
           kind load docker-image ${HF_DOWNLOADER_IMAGE_TAG} --name kind
-          kind load docker-image ${EMBEDDING_SERVICE_IMAGE_TAG} --name kind
           kind load docker-image ${WHATSAPP_WEBHOOK_IMAGE_TAG} --name kind
           kind load docker-image ${CHAINLIT_UI_IMAGE_TAG} --name kind
           shell: powershell # Explicitly tells GitHub Actions to use PowerShell
