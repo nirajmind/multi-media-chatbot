@@ -109,7 +109,7 @@ jobs:
         # and kubectl. Node image is specified, but the binary download is manual for robustness.
         run: |
           $KIND_CLI_VERSION = "v0.29.0" # Ensure this matches the desired Kind CLI version
-          $KIND_INSTALL_DIR = "$env:HOMEDRIVE\$env:HOMEPATH\.kind\bin" # Standard install dir
+          $KIND_INSTALL_DIR = "$env:HOMEDRIVE\nadhi\.kind\bin" # Standard install dir
           $KIND_URL = "https://github.com/kubernetes-sigs/kind/releases/download/v0.29.0/kind-windows-amd64"
           
           Write-Host "Creating KIND install directory: $KIND_INSTALL_DIR"
@@ -140,6 +140,13 @@ jobs:
 
           # Add kind.exe to PATH for this job
           echo "$KIND_INSTALL_DIR" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          kind version # Verify KIND installation
+          # --- CRITICAL FIX: Create the Kind cluster ---
+          $NODE_IMAGE = "kindest/node:$KUBECTL_VERSION" # Use the KUBECTL_VERSION for node image
+          Write-Host "Creating Kind cluster: kind create cluster --name kind --image $NODE_IMAGE"
+          kind create cluster --name kind --image $NODE_IMAGE
+          Write-Host "Kind cluster created."
+          # --- END CRITICAL FIX ---
         shell: powershell # Explicitly tells GitHub Actions to use PowerShell  
 
       #- name: Set up Kind Cluster
