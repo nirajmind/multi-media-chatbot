@@ -104,51 +104,51 @@ jobs:
           EMBEDDER_NAME: ${{ vars.EMBEDDER_NAME }}
       # --- END CRITICAL FIX ---  
 
-      - name: Set up Kind Cluster # <--- CRITICAL FIX: Make Kind binary download robust ---
+      #- name: Set up Kind Cluster # <--- CRITICAL FIX: Make Kind binary download robust ---
         # This step now focuses on getting the KIND CLI binary (kind.exe)
         # and kubectl. Node image is specified, but the binary download is manual for robustness.
-        run: |
-          $KIND_CLI_VERSION = "v0.29.0" # Ensure this matches the desired Kind CLI version
-          $KIND_INSTALL_DIR = "$env:HOMEDRIVE\nadhi\.kind\bin" # Standard install dir
-          $KIND_URL = "https://github.com/kubernetes-sigs/kind/releases/download/v0.29.0/kind-windows-amd64"
+      #  run: |
+      #    $KIND_CLI_VERSION = "v0.29.0" # Ensure this matches the desired Kind CLI version
+      #    $KIND_INSTALL_DIR = "$env:HOMEDRIVE\nadhi\.kind\bin" # Standard install dir
+      #    $KIND_URL = "https://github.com/kubernetes-sigs/kind/releases/download/v0.29.0/kind-windows-amd64"
           
-          Write-Host "Creating KIND install directory: $KIND_INSTALL_DIR"
-          New-Item -ItemType Directory -Force -Path $KIND_INSTALL_DIR
+      #    Write-Host "Creating KIND install directory: $KIND_INSTALL_DIR"
+      #    New-Item -ItemType Directory -Force -Path $KIND_INSTALL_DIR
           
-          Write-Host "Downloading KIND binary from: $KIND_URL"
+      #    Write-Host "Downloading KIND binary from: $KIND_URL"
           
           # --- Robust download with retries and timeout ---
-          $MaxRetries = 5
-          $DelaySeconds = 5
-          for ($i = 0; $i -lt $MaxRetries; $i++) {
-              try {
+      #    $MaxRetries = 5
+      #    $DelaySeconds = 5
+      #    for ($i = 0; $i -lt $MaxRetries; $i++) {
+      #        try {
                   # Use Invoke-WebRequest with increased timeout
-                  Invoke-WebRequest -Uri $KIND_URL -OutFile "$KIND_INSTALL_DIR\kind.exe" -TimeoutSec 300 # 5 minutes timeout
-                  Write-Host "KIND binary downloaded successfully on attempt $($i + 1)."
-                  break
-              } catch {
-                  Write-Host "Download failed on attempt $($i + 1): $($_.Exception.Message)"
-                  if ($i -lt ($MaxRetries - 1)) {
-                      Write-Host "Retrying in $DelaySeconds seconds..."
-                      Start-Sleep -Seconds $DelaySeconds
-                  } else {
-                      throw "Failed to download KIND binary after $MaxRetries attempts."
-                  }
-              }
-          }
+      #            Invoke-WebRequest -Uri $KIND_URL -OutFile "$KIND_INSTALL_DIR\kind.exe" -TimeoutSec 300 # 5 minutes timeout
+      #            Write-Host "KIND binary downloaded successfully on attempt $($i + 1)."
+      #            break
+      #        } catch {
+      #            Write-Host "Download failed on attempt $($i + 1): $($_.Exception.Message)"
+      #            if ($i -lt ($MaxRetries - 1)) {
+      #                Write-Host "Retrying in $DelaySeconds seconds..."
+      #                Start-Sleep -Seconds $DelaySeconds
+      #            } else {
+      #                throw "Failed to download KIND binary after $MaxRetries attempts."
+      #            }
+      #        }
+      #    }
           # --- End robust download ---
 
           # Add kind.exe to PATH for this job
-          echo "$KIND_INSTALL_DIR" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          kind version # Verify KIND installation
-          kubectl version --client # Verify kubectl installation
+      #    echo "$KIND_INSTALL_DIR" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      #    kind version # Verify KIND installation
+      #    kubectl version --client # Verify kubectl installation
           # --- CRITICAL FIX: Create the Kind cluster ---
-          $NODE_IMAGE = "kindest/node:v1.30.13" # Use the KUBECTL_VERSION for node image
-          Write-Host "Creating Kind cluster: kind create cluster --name kind --image $NODE_IMAGE"
-          kind create cluster --name kind --image $NODE_IMAGE
-          Write-Host "Kind cluster created."
+      #    $NODE_IMAGE = "kindest/node:v1.30.13" # Use the KUBECTL_VERSION for node image
+      #    Write-Host "Creating Kind cluster: kind create cluster --name kind --image $NODE_IMAGE"
+      #    kind create cluster --name kind --image $NODE_IMAGE
+      #    Write-Host "Kind cluster created."
           # --- END CRITICAL FIX ---
-        shell: powershell # Explicitly tells GitHub Actions to use PowerShell  
+      #  shell: powershell # Explicitly tells GitHub Actions to use PowerShell  
 
       #- name: Set up Kind Cluster
       #  uses: helm/kind-action@v1.12.0
