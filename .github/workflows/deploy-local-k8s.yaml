@@ -41,15 +41,15 @@ jobs:
         shell: powershell # Explicitly tells GitHub Actions to use PowerShell
       # --- END CRITICAL FIX ---
 
-      - name: Set up Docker Buildx # Still good practice for multi-arch builds if needed
-        uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/amd64 # Adjust based on your needs
+#      - name: Set up Docker Buildx # Still good practice for multi-arch builds if needed
+#        uses: docker/setup-buildx-action@v3
+#        with:
+#          platforms: linux/amd64 # Adjust based on your needs
           # --- CRITICAL FIX: Specify a known-good BuildKit image ---
           # 'buildkitd-flags: --containerd-worker-snapshotter=overlayfs --oci-worker-net=host' are common flags for Windows/WSL2
           # 'moby/buildkit:latest' or 'moby/buildkit:buildx-stable' might work.
           # Let's try a stable Linux-oriented tag for buildkitd itself.
-          buildkitd-flags: --debug --oci-worker-net=host --oci-worker-snapshotter=overlayfs --containerd-worker-image moby/buildkit:buildx-stable
+#          buildkitd-flags: --debug --oci-worker-net=host --oci-worker-snapshotter=overlayfs --containerd-worker-image moby/buildkit:buildx-stable
           # Or simply target the Linux builder explicitly if the action supports it directly:
           # builder: default
           # driver-opts: |
@@ -57,9 +57,9 @@ jobs:
           #   platform=linux/amd64
           # Driver options are preferred for setting the image if you just want to swap.
           # Let's use the explicit 'driver-opts' for the builder.
-          driver: docker
-          driver-opts: |
-            image=moby/buildkit:latest
+#          driver: docker
+#          driver-opts: |
+#            image=moby/buildkit:latest
           #  platform=linux/amd64
           # If the above fails, you can try to specify a driver like 'docker-container' and then the image.
           # driver: docker-container
@@ -149,19 +149,19 @@ jobs:
           #kind-binary-os: windows
           #kind-binary-arch: amd64  
 
-      - name: Build Docker Images with Makefile
-        run: |
+#      - name: Build Docker Images with Makefile
+#        run: |
           # Ensure docker-compose is installed on the runner if needed
           # (GitHub Actions runners usually have it, but good to note)
           
           # Build all service images defined in docker-compose.yml
-          make ava-run
-        env:
+#          make ava-run
+#        env:
           # Pass any ENV variables that your Dockerfiles might need during build
           # E.g., for HF_MODELS_TO_DOWNLOAD and HF_HOME
           # ,openai/whisper-1"
-          HF_MODELS_TO_DOWNLOAD: "sentence-transformers/all-MiniLM-L6-v2"
-          HF_HOME: "/app/hf_cache"
+#          HF_MODELS_TO_DOWNLOAD: "sentence-transformers/all-MiniLM-L6-v2"
+#          HF_HOME: "/app/hf_cache"
 
       - name: Load Docker Images into Kind Cluster
         run: |
